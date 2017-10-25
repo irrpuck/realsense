@@ -155,12 +155,30 @@ namespace realsense_camera
 
         camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
         camera_publisher_[stream_index].publish(msg, camera_info_ptr_[stream_index]);
+        if (stream_index == RS_STREAM_DEPTH)
+        {
+          depth_image_frequency_ptr_->tick();
+          expected_depth_update_freq_ = fps_[stream_index];
+        }
+        else if (stream_index == RS_STREAM_COLOR)
+        {
+          rgb_image_frequency_ptr_->tick();
+          expected_rgb_update_freq_ = fps_[stream_index];
+        }
       }
       else
       {
         if ((stream_index == RS_STREAM_DEPTH) || (stream_index == RS_STREAM_COLOR))
         {
           duplicate_depth_color_ = true;  // Set this flag to true if Depth and/or Color frame is duplicate
+        }
+        if (stream_index == RS_STREAM_DEPTH)
+        {
+          expected_depth_update_freq_ = 0.0;
+        }
+        else if (stream_index == RS_STREAM_COLOR)
+        {
+          expected_rgb_update_freq_ = 0.0;
         }
       }
 
