@@ -400,6 +400,46 @@ namespace realsense_camera
         &BaseNodelet::isPoweredCameraService, this);
   }
 
+  void BaseNodelet::setupDiagnostics()
+  {
+    diagnostic_updater_.setHardwareID(serial_no_);
+
+    diagnostic_updater_.add("Hardware Status", this, &BaseNodelet::populateDiagnosticsStatus);
+
+    expected_rgb_update_freq_ = 0.0;
+    expected_depth_update_freq_ = 0.0;
+    rgb_image_frequency_ptr_ = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>("RGB Image Topic", diagnostic_updater_,
+                                                                                               diagnostic_updater::FrequencyStatusParam(&expected_rgb_update_freq_,
+                                                                                                                                        &expected_rgb_update_freq_));
+
+    depth_image_frequency_ptr_ = std::make_shared<diagnostic_updater::HeaderlessTopicDiagnostic>("Depth Image Topic", diagnostic_updater_,
+                                                                                                 diagnostic_updater::FrequencyStatusParam(&expected_depth_update_freq_,
+                                                                                                                                          &expected_depth_update_freq_));
+
+    diagnostic_timer_ = nh_.createTimer(ros::Duration(1.0), &BaseNodelet::diagnosticTimerCallback, this);
+  }
+
+  void BaseNodelet::populateDiagnosticsStatus(diagnostic_updater::DiagnosticStatusWrapper &stat)
+  {
+    if (rs_is_device_streaming(rs_device_, 0) == 1)
+    {
+      stat.summary(diagnostic_msgs::DiagnosticStatus::OK, "Device Started");
+    }
+    else
+    {
+      stat.summary(diagnostic_msgs::DiagnosticStatus::ERROR, "Device Not Started");
+    }
+    stat.add("Device Serial", serial_no_);
+    stat.add("Device Port", usb_port_id_);
+    stat.add("Device Type", camera_type_);
+    stat.add("Device Mode", mode_);
+  }
+
+  void BaseNodelet::diagnosticTimerCallback(const ros::TimerEvent &)
+  {
+    diagnostic_updater_.update();
+  }
+
   /*
    * Get the latest values of the camera options.
    */
@@ -897,6 +937,27 @@ namespace realsense_camera
         msg->step = step_[stream_index];
         camera_info_ptr_[stream_index]->header.stamp = msg->header.stamp;
         camera_publisher_[stream_index].publish(msg, camera_info_ptr_[stream_index]);
+        if (stream_index == RS_STREAM_DEPTH)
+        {
+          depth_image_frequency_ptr_->tick();
+          expected_depth_update_freq_ = fps_[stream_index];
+        }
+        else if (stream_index == RS_STREAM_COLOR)
+        {
+          rgb_image_frequency_ptr_->tick();
+          expected_rgb_update_freq_ = fps_[stream_index];
+        }
+      }
+      else
+      {
+        if (stream_index == RS_STREAM_DEPTH)
+        {
+          expected_depth_update_freq_ = 0.0;
+        }
+        else if (stream_index == RS_STREAM_COLOR)
+        {
+          expected_rgb_update_freq_ = 0.0;
+        }
       }
     }
     ts_[stream_index] = frame_ts;

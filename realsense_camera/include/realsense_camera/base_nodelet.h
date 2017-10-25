@@ -65,6 +65,10 @@
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_broadcaster.h>
 #include <tf2_ros/static_transform_broadcaster.h>
+#include <diagnostic_msgs/DiagnosticStatus.h>
+#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/update_functions.h>
+#include <diagnostic_updater/publisher.h>
 
 #include <realsense_camera/CameraConfiguration.h>
 #include <realsense_camera/IsPowered.h>
@@ -100,6 +104,12 @@ protected:
   ros::ServiceServer set_power_service_;
   ros::ServiceServer force_power_service_;
   ros::ServiceServer is_powered_service_;
+  diagnostic_updater::Updater diagnostic_updater_;
+  std::shared_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> rgb_image_frequency_ptr_;
+  std::shared_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> depth_image_frequency_ptr_;
+  double expected_rgb_update_freq_;
+  double expected_depth_update_freq_;
+  ros::Timer diagnostic_timer_;
   rs_error *rs_error_ = NULL;
   rs_context *rs_context_ = NULL;
   rs_device *rs_device_;
@@ -158,6 +168,9 @@ protected:
   virtual std::vector<int> listCameras(int num_of_camera);
   virtual void advertiseTopics();
   virtual void advertiseServices();
+  virtual void setupDiagnostics();
+  virtual void populateDiagnosticsStatus(diagnostic_updater::DiagnosticStatusWrapper &stat);
+  virtual void diagnosticTimerCallback(const ros::TimerEvent &);
   virtual std::vector<std::string> setDynamicReconfServer() { return {}; }  // must be defined in derived class
   virtual void startDynamicReconfCallback() { return; }  // must be defined in derived class
   virtual void getCameraOptions();
