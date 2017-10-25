@@ -1300,7 +1300,7 @@ namespace realsense_camera
   /*
    * Display error details and shutdown ROS.
    */
-  void BaseNodelet::checkError()
+  void BaseNodelet::checkError(bool shutdown=true)
   {
     if (rs_error_)
     {
@@ -1308,7 +1308,10 @@ namespace realsense_camera
           << rs_get_failed_args(rs_error_) << " ): \n" << rs_get_error_message(rs_error_) << " \n");
       rs_free_error(rs_error_);
       rs_error_ = NULL;
-      ros::shutdown();
+      if (shutdown)
+      {
+          ros::shutdown();
+      }
     }
   }
 

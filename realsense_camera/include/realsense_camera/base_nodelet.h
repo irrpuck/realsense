@@ -189,7 +189,7 @@ protected:
   virtual void publishStaticTransforms();
   virtual void publishDynamicTransforms();
   virtual void prepareTransforms();
-  virtual void checkError();
+  virtual void checkError(bool shutdown=true);
   virtual bool checkForSubscriber();
   virtual void wrappedSystem(const std::vector<std::string>& string_argv);
   virtual void setFrameCallbacks();

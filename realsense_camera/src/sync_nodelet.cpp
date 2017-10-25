@@ -78,8 +78,9 @@ namespace realsense_camera
 
       if (rs_is_device_streaming(rs_device_, 0) == 1)
       {
+
         rs_wait_for_frames(rs_device_, &rs_error_);
-        checkError();
+        checkError(false);
         topic_ts_ = ros::Time::now();
         duplicate_depth_color_ = false;
 
