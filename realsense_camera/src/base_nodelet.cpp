@@ -109,6 +109,7 @@ namespace realsense_camera
 
     advertiseTopics();
     advertiseServices();
+    setupDiagnostics();
     std::vector<std::string> dynamic_params = setDynamicReconfServer();
     getCameraOptions();
     setStaticCameraOptions(dynamic_params);
